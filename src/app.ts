@@ -30,7 +30,7 @@ const bookstackPageSchema = z.object({
           name: z.string(),
           value: z.string(),
           order: z.number(),
-          highlight_name: z.boolean()
+          highlight_name: z.boolean().optional().nullable()
         })
       ),
       book: z.object({
@@ -85,7 +85,14 @@ const bookstackPageDataSchema = z.object({
   }),
   editor: z.string(),
   raw_html: z.string(),
-  tags: z.array(z.string())
+  tags: z.array(
+    z.object({
+      name: z.string(),
+      value: z.string(),
+      order: z.number(),
+      highlight_name: z.boolean().optional().nullable()
+    })
+  )
 });
 
 type BookstackPageData = z.infer<typeof bookstackPageDataSchema>;
