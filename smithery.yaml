@@ -1,0 +1,43 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - BOOKSTACK_API_URL
+      - BOOKSTACK_API_TOKEN
+      - BOOKSTACK_API_KEY
+    properties:
+      BOOKSTACK_API_URL:
+        type: string
+        description: The base URL of the BookStack API.
+      BOOKSTACK_API_TOKEN:
+        type: string
+        description: The API token for authenticating with BookStack.
+      BOOKSTACK_API_KEY:
+        type: string
+        description: The API key for additional BookStack authentication.
+      PORT:
+        type: number
+        default: 3000
+        description: Optional port for the MCP server to listen on.
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['build/app.js'],
+      env: {
+        BOOKSTACK_API_URL: config.BOOKSTACK_API_URL,
+        BOOKSTACK_API_TOKEN: config.BOOKSTACK_API_TOKEN,
+        BOOKSTACK_API_KEY: config.BOOKSTACK_API_KEY,
+        PORT: config.PORT ? config.PORT.toString() : '3000'
+      }
+    })
+  exampleConfig:
+    BOOKSTACK_API_URL: https://your-bookstack-instance.example.com/api
+    BOOKSTACK_API_TOKEN: your_example_api_token
+    BOOKSTACK_API_KEY: your_example_api_key
+    PORT: 3000
