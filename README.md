@@ -1,5 +1,7 @@
 # BookStack MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@yellowgg2/mcp-bookstack)](https://smithery.ai/server/@yellowgg2/mcp-bookstack)
+
 A Model Context Protocol (MCP) server that provides tools for searching pages from BookStack. This server interacts with the BookStack API and provides structured data for pages with clean HTML-to-text conversion.
 
 ## Features
@@ -12,6 +14,15 @@ A Model Context Protocol (MCP) server that provides tools for searching pages fr
 
 ## Installation
 
+### Installing via Smithery
+
+To install mcp-bookstack for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@yellowgg2/mcp-bookstack):
+
+```bash
+npx -y @smithery/cli install @yellowgg2/mcp-bookstack --client claude
+```
+
+### Installing Manually
 1. Clone the repository:
 
 ```bash
