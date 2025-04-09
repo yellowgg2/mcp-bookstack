@@ -17,7 +17,7 @@
     "start": "node build/app.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
