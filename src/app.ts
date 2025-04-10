@@ -241,7 +241,8 @@ class BookstackServer {
         const pageContents = await Promise.all(
           pages.data.map(async page => {
             const pageData = await this.readBookstackPage(page.id);
-            const content = this.htmlToPlainText(pageData.html);
+            const content =
+              pageData.markdown || this.htmlToPlainText(pageData.html);
 
             return {
               id: page.id,
