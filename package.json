@@ -1,34 +1,35 @@
 {
   "name": "mcp-bookstack",
-  "version": "1.0.0",
-  "main": "app.ts",
+  "version": "1.2.0", // Version erhöht
+  "main": "build/main.js", // Auf neue Struktur angepasst
   "type": "module",
   "bin": {
-    "hn-server": "./build/app.js"
+    "mcp-bookstack": "./build/main.js" // Auf neue Struktur angepasst
   },
   "files": [
-    "build"
+    "build",
+    "locales" // Falls i18n hinzugefügt wird
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/app.js', '755')\"",
+    "build": "tsc && node -e \"require('fs').chmodSync('build/main.js', '755')\"", // Passe Pfad im chmod an
     "prepare": "npm run build",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/app.js",
-    "start": "node build/app.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/main.js", // Passe Pfad an
+    "start": "node build/main.js" // Passe Pfad an
   },
   "author": "",
   "license": "MIT",
-  "description": "",
+  "description": "MCP Server for BookStack with content generation features",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2",
-    "zod-to-json-schema": "^3.24.5"
+    "zod-to-json-schema": "^3.24.5" // Abhängigkeit hinzugefügt
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "typescript": "^5.8.3"
+    "@types/node": "^20.14.0", // Node 20 statt 22 für breitere Kompatibilität?
+    "typescript": "^5.8.3" // Mind. 5.x für neuere Features
   },
   "keywords": [
     "mcp",
