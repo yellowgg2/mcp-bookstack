@@ -1,21 +1,21 @@
 {
   "name": "mcp-bookstack",
-  "version": "1.2.0", // Version erhöht
-  "main": "build/main.js", // Auf neue Struktur angepasst
+  "version": "1.2.0",
+  "main": "build/main.js",
   "type": "module",
   "bin": {
-    "mcp-bookstack": "./build/main.js" // Auf neue Struktur angepasst
+    "mcp-bookstack": "./build/main.js"
   },
   "files": [
     "build",
-    "locales" // Falls i18n hinzugefügt wird
+    "locales"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/main.js', '755')\"", // Passe Pfad im chmod an
+    "build": "tsc && node -e \"require('fs').chmodSync('build/main.js', '755')\"",
     "prepare": "npm run build",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/main.js", // Passe Pfad an
-    "start": "node build/main.js" // Passe Pfad an
+    "inspector": "npx @modelcontextprotocol/inspector build/main.js",
+    "start": "node build/main.js"
   },
   "author": "",
   "license": "MIT",
@@ -25,11 +25,11 @@
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2",
-    "zod-to-json-schema": "^3.24.5" // Abhängigkeit hinzugefügt
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0", // Node 20 statt 22 für breitere Kompatibilität?
-    "typescript": "^5.8.3" // Mind. 5.x für neuere Features
+    "@types/node": "^20.14.0",
+    "typescript": "^5.8.3"
   },
   "keywords": [
     "mcp",

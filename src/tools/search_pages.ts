@@ -1,15 +1,15 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { ToolSchema } from '@modelcontextprotocol/sdk/types.js';
+// import type { ToolSchema } from '@modelcontextprotocol/sdk/types.js'; // Nicht mehr benötigt
 import { SearchPagesArgsSchema } from '../common/schemas_tools.js';
 import { BookStackAPI } from '../services/bookstack_api.js';
 
-export const searchPagesToolSchema: ToolSchema = {
-    name: "seiten_suchen", // German name
+// KEINE explizite Typ-Annotation mehr!
+export const searchPagesToolSchema = {
+    name: "seiten_suchen",
     description: "Sucht Seiten in Bookstack anhand einer Suchanfrage. Gibt Titel, URL und Vorschau zurück.",
     inputSchema: zodToJsonSchema(SearchPagesArgsSchema)
 };
-
 export async function handleSearchPages(
     args: z.infer<typeof SearchPagesArgsSchema>,
     bookstackApi: BookStackAPI

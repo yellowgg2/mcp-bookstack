@@ -12,32 +12,84 @@ startCommand:
     properties:
       BOOKSTACK_API_URL:
         type: string
-        description: The base URL of the BookStack API.
+        description: The base URL of the BookStack API (e.g., https://docs.example.com).
       BOOKSTACK_API_TOKEN:
         type: string
-        description: The API token for authenticating with BookStack.
+        description: The API Token ID generated in BookStack.
       BOOKSTACK_API_KEY:
         type: string
-        description: The API key for additional BookStack authentication.
-      PORT:
-        type: number
-        default: 3000
-        description: Optional port for the MCP server to listen on.
+        description: The API Token Secret generated in BookStack.
+      MCP_DEFAULT_LANGUAGE:
+        type: string
+        default: "de"
+        description: Default language for server messages (e.g., 'de', 'en'). (Currently affects status messages).
+      STYLEGUIDE_HEADING_LEVEL_1:
+        type: string
+        default: "##"
+        description: Markdown for top-level headings (e.g., '#', '##').
+      STYLEGUIDE_HEADING_LEVEL_2:
+        type: string
+        default: "###"
+        description: Markdown for second-level headings (e.g., '##', '###').
+      STYLEGUIDE_LOGO_MARKDOWN:
+        type: string
+        default: ""
+        description: Full Markdown string for the logo (e.g., '![Logo](/logo.png)'). Leave empty if no logo.
+      STYLEGUIDE_INFO_ICON:
+        type: string
+        default: ":information_source:"
+        description: Icon/Emoji prefix for 'info' type sections.
+      STYLEGUIDE_WARN_ICON:
+        type: string
+        default: ":warning:"
+        description: Icon/Emoji prefix for 'warning' type sections.
+      STYLEGUIDE_LEGAL_FOOTER_MD:
+        type: string
+        default: ""
+        description: Markdown for the legal footer. Leave empty if none. Supports '\\n' for newlines.
+      AUTO_TAGS_ENABLED:
+        type: boolean
+        default: false
+        description: Enable automatic tag generation based on keywords.
+      AUTO_TAGS_KEYWORDS:
+        type: string
+        default: ""
+        description: Comma-separated list of keywords for automatic tagging (case-insensitive matching).
+      AUTO_LEGAL_FOOTER_ENABLED:
+        type: boolean
+        default: false
+        description: Enable automatic appending of the legal footer.
+
   commandFunction:
     # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
     |-
     (config) => ({
       command: 'node',
-      args: ['build/app.js'],
+      args: ['build/main.js'], // Point to new entry point
       env: {
         BOOKSTACK_API_URL: config.BOOKSTACK_API_URL,
         BOOKSTACK_API_TOKEN: config.BOOKSTACK_API_TOKEN,
         BOOKSTACK_API_KEY: config.BOOKSTACK_API_KEY,
-        PORT: config.PORT ? config.PORT.toString() : '3000'
+        MCP_DEFAULT_LANGUAGE: config.MCP_DEFAULT_LANGUAGE || 'de',
+        STYLEGUIDE_HEADING_LEVEL_1: config.STYLEGUIDE_HEADING_LEVEL_1 || '##',
+        STYLEGUIDE_HEADING_LEVEL_2: config.STYLEGUIDE_HEADING_LEVEL_2 || '###',
+        STYLEGUIDE_LOGO_MARKDOWN: config.STYLEGUIDE_LOGO_MARKDOWN || '',
+        STYLEGUIDE_INFO_ICON: config.STYLEGUIDE_INFO_ICON || ':information_source:',
+        STYLEGUIDE_WARN_ICON: config.STYLEGUIDE_WARN_ICON || ':warning:',
+        STYLEGUIDE_LEGAL_FOOTER_MD: config.STYLEGUIDE_LEGAL_FOOTER_MD || '',
+        AUTO_TAGS_ENABLED: (config.AUTO_TAGS_ENABLED === true).toString(),
+        AUTO_TAGS_KEYWORDS: config.AUTO_TAGS_KEYWORDS || '',
+        AUTO_LEGAL_FOOTER_ENABLED: (config.AUTO_LEGAL_FOOTER_ENABLED === true).toString(),
       }
     })
   exampleConfig:
-    BOOKSTACK_API_URL: https://your-bookstack-instance.example.com/api
-    BOOKSTACK_API_TOKEN: your_example_api_token
-    BOOKSTACK_API_KEY: your_example_api_key
-    PORT: 3000
+    BOOKSTACK_API_URL: https://your-bookstack-instance.example.com
+    BOOKSTACK_API_TOKEN: your_api_token_id
+    BOOKSTACK_API_KEY: your_api_token_secret
+    MCP_DEFAULT_LANGUAGE: de
+    STYLEGUIDE_HEADING_LEVEL_1: "##"
+    # ... other example styleguide settings ...
+    AUTO_TAGS_ENABLED: true
+    AUTO_TAGS_KEYWORDS: "ProjektX, Wichtig, Anleitung"
+    AUTO_LEGAL_FOOTER_ENABLED: true
+    STYLEGUIDE_LEGAL_FOOTER_MD: "---\\nCopyright (c) 2025 My Company"

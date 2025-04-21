@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { ToolSchema } from '@modelcontextprotocol/sdk/types.js';
-import { CreatePageToolArgsSchema } from '../common/schemas_tools.js';
+// import type { ToolSchema } from '@modelcontextprotocol/sdk/types.js'; // Nicht mehr benötigt
+import { CreatePageToolArgsSchema, tagSchema } from '../common/schemas_tools.js';
 import { BookStackAPI } from '../services/bookstack_api.js';
 import { loadStyleGuideConfig } from '../config/styleguide.js';
 import { generateStyledMarkdown } from './markdown_generator.js';
@@ -9,12 +9,12 @@ import { generateAutoTags } from './tag_generator.js';
 import type { CreatePageApiPayload } from '../common/schemas_api.js';
 import type { Tag } from '../common/types.js';
 
-export const createPageToolSchema: ToolSchema = {
+// KEINE explizite Typ-Annotation mehr!
+export const createPageToolSchema = {
     name: "seite_erstellen",
     description: "Erstellt eine neue Seite in Bookstack mit strukturiertem Inhalt und optionaler Styleguide-Anwendung.",
     inputSchema: zodToJsonSchema(CreatePageToolArgsSchema)
 };
-
 // Handler Function
 export async function handleCreatePage(
     args: z.infer<typeof CreatePageToolArgsSchema>,
