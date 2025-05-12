@@ -6,8 +6,9 @@ import { BookStackAPI } from '../services/bookstack_api.js';
 import { loadStyleGuideConfig } from '../config/styleguide.js';
 import { generateStyledMarkdown } from './markdown_generator.js';
 import { generateAutoTags } from './tag_generator.js';
-import type { CreatePageApiPayload } from '../common/schemas_api.js';
+import type { CreatePageApiPayload, BookstackSearchItem } from '../common/schemas_api.js';
 import type { Tag } from '../common/types.js';
+import { findSimilarPages } from '../common/utils.js';
 
 // KEINE explizite Typ-Annotation mehr!
 export const createPageToolSchema = {
@@ -20,10 +21,54 @@ export async function handleCreatePage(
     args: z.infer<typeof CreatePageToolArgsSchema>,
     bookstackApi: BookStackAPI
 ): Promise<string> {
+    // Prüfen, ob ähnliche Seiten existieren, falls gewünscht
+    if (args.check_similar) {
+        const similarPages = await findSimilarPages(args.page_title, args.book_id, bookstackApi, args.similarity_threshold);
+        
+        if (similarPages.length > 0) {
+            // Ähnliche Seiten gefunden, Informationen zurückgeben
+            let response = `Es wurden ${similarPages.length} ähnliche Seiten gefunden:\n\n`;
+            
+            similarPages.forEach((page: BookstackSearchItem, index: number) => {
+                response += `${index + 1}. **${page.name}** (ID: ${page.id})\n`;
+                if (page.book) {
+                    response += `   Buch: ${page.book.name} (ID: ${page.book.id})\n`;
+                }
+                if (page.preview_html?.content) {
+                    const preview = page.preview_html.content.substring(0, 100) + (page.preview_html.content.length > 100 ? '...' : '');
+                    response += `   Vorschau: ${preview}\n`;
+                }
+                if (page.url) {
+                    response += `   URL: ${page.url}\n`;
+                }
+                response += '\n';
+            });
+            
+            response += `\nUm eine bestehende Seite zu aktualisieren, verwenden Sie bitte das Tool 'seite_aktualisieren' mit der entsprechenden Seiten-ID.\n`;
+            response += `Um trotzdem eine neue Seite zu erstellen, setzen Sie 'check_similar: false' in den Argumenten.`;
+            
+            return response;
+        }
+    }
+
     const styleConfig = loadStyleGuideConfig();
 
-    // 1. Generate Markdown
-    const generatedMarkdown = generateStyledMarkdown(args, styleConfig);
+    // 1. Load template if specified
+    let baseMarkdown = "";
+    if (args.template_id) {
+        try {
+            const template = await bookstackApi.getPage(args.template_id);
+            if (!template.markdown) {
+                throw new Error("Template page has no markdown content");
+            }
+            baseMarkdown = template.markdown;
+        } catch (error) {
+            return `Fehler beim Laden der Vorlage (ID: ${args.template_id}): ${error instanceof Error ? error.message : String(error)}`;
+        }
+    }
+
+    // 2. Generate Markdown (will be merged with template if exists)
+    const generatedMarkdown = generateStyledMarkdown(args, styleConfig, baseMarkdown);
 
     // 2. Generate Tags (Auto + Manual)
     const autoTags: Tag[] = generateAutoTags(args.page_title, generatedMarkdown, styleConfig);

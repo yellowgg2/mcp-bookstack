@@ -39,6 +39,8 @@ export const CreateBookArgsSchema = z.object({
     name: z.string().describe("Der Name des neuen Buches."),
     description: z.string().optional().describe("Optionale Beschreibung des Buches (Markdown)."),
     tags: z.array(tagSchema).optional().describe("Optionale Tags für das Buch."),
+    check_similar: z.boolean().optional().default(true).describe("Prüfen, ob ähnliche Bücher bereits existieren."),
+    similarity_threshold: z.number().min(0).max(1).optional().default(0.7).describe("Schwellenwert für die Ähnlichkeit (0-1, wobei 1 identisch ist)."),
 });
 
 // Argumente für das Tool zum Erstellen einer Seite (strukturierter Input)
@@ -48,7 +50,8 @@ export const CreateBookArgsSchema = z.object({
 export const CreatePageToolArgsSchema = z.object({
     book_id: z.number().describe("ID des Buches, in dem die Seite erstellt werden soll."),
     page_title: z.string().describe("Der Haupttitel der neuen Seite."),
-    sections: z.array(SectionSchema).min(1).describe("Die Inhaltsabschnitte der Seite."),
+    template_id: z.number().optional().describe("Optional: ID einer Vorlage aus dem Alpenlexikon, die als Basis verwendet werden soll."),
+    sections: z.array(SectionSchema).min(1).describe("Die Inhaltsabschnitte der Seite. Wird eine Vorlage verwendet, können diese Abschnitte die Vorlage ergänzen oder überschreiben."),
     tags: z.array(tagSchema).optional().describe("Optionale, manuell gesetzte Tags."),
     include_logo: z.boolean().optional().default(false).describe("Logo aus Styleguide am Anfang einfügen?"),
     chapter_id: z.number().optional().describe("Optionale ID eines Kapitels zur Zuordnung."),
@@ -56,7 +59,10 @@ export const CreatePageToolArgsSchema = z.object({
     // --- NEUE METADATEN ARGUMENTE (optional) ---
     erstellt_von_benutzer: z.string().optional().describe("Name des Benutzers, der die Erstellung veranlasst hat (vom Client übergeben)."),
     verwendeter_client: z.string().optional().describe("Name/Typ des Clients oder Computers (vom Client übergeben, z.B. 'Laptop-ABC', 'VSCode Extension')."),
-    verwendete_ki: z.string().optional().describe("Name des KI-Modells (vom Client übergeben, z.B. 'Claude 3 Opus').")
+    verwendete_ki: z.string().optional().describe("Name des KI-Modells (vom Client übergeben, z.B. 'Claude 3 Opus')."),
+    // --- ÄHNLICHKEITSPRÜFUNG ---
+    check_similar: z.boolean().optional().default(true).describe("Prüfen, ob ähnliche Seiten bereits existieren."),
+    similarity_threshold: z.number().min(0).max(1).optional().default(0.7).describe("Schwellenwert für die Ähnlichkeit (0-1, wobei 1 identisch ist).")
 });
 
 // --- Argumente für seite_aktualisieren erweitern ---

@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { ToolSchema } from "@modelcontextprotocol/sdk/types.js"; // Typ-Import bleibt
+import type { ToolSchema } from "@modelcontextprotocol/sdk/types.js";
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
-  // ToolSchema hier entfernt
 } from "@modelcontextprotocol/sdk/types.js";
+import { searchTemplatesToolSchema, SearchTemplatesArgsSchema, handleSearchTemplates } from './tools/search_templates.js';
 import axios, { AxiosError } from "axios";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import dotenv from "dotenv";
+import { BookStackAPI } from './services/bookstack_api.js';
 
 dotenv.config();
 
@@ -140,13 +141,14 @@ class BookstackServer {
         };
 
         // Lasse TypeScript den Typ des Arrays aus den Elementen ableiten.
-        const tools = [ // <-- KEINE explizite Typ-Annotation ': ToolSchema[]' mehr
+        const tools = [
             searchAllTool,
             searchPagesTool,
             getPageContentTool,
             createBookTool,
             createPageTool,
             updatePageTool,
+            searchTemplatesToolSchema,
         ];
         // TypeScript sollte erkennen, dass jedes Element strukturell kompatibel mit ToolSchema ist.
       return { tools };
@@ -226,6 +228,13 @@ class BookstackServer {
                   const apiPayload: UpdatePageApiPayload = { markdown: toolArgs.markdown_content, ...(toolArgs.new_name && { name: toolArgs.new_name }), ...(toolArgs.tags && { tags: toolArgs.tags })};
                   const page = await this.updateBookstackPage(toolArgs.page_id, apiPayload);
                   return { content: [{ type: "text", text: `Page ${page.id} updated successfully.\nName: ${page.name}\nURL: ${page.url || 'N/A'}` }] };
+              }
+
+              case "vorlage_suchen": {
+                  const args = SearchTemplatesArgsSchema.parse(request.params.arguments);
+                  const api = new BookStackAPI(this.baseUrl!, this.token!, this.secret!, "1.1.4");
+                  const result = await handleSearchTemplates(args, api);
+                  return { content: [{ type: "text", text: result }] };
               }
 
               default:

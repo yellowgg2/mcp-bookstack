@@ -23,7 +23,10 @@ export const bookstackSearchItemSchema = z.object({
   book: z.object({ id: z.number(), name: z.string(), slug: z.string() }).optional().nullable(),
   preview_html: z.object({ name: z.string(), content: z.string() }).optional().nullable()
 });
-export const bookstackSearchResponseSchema = z.object({ data: z.array(bookstackSearchItemSchema) });
+export const bookstackSearchResponseSchema = z.object({
+    data: z.array(bookstackSearchItemSchema),
+    total: z.number().optional()
+});
 
 // Schema für Suchergebnisseiten (spezifisch für Seiten)
 export const bookstackSearchPageSchema = bookstackSearchItemSchema.extend({

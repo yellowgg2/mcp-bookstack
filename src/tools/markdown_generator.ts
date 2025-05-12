@@ -5,13 +5,24 @@ import type { Section } from '../common/types.js'; // Stelle sicher, dass dies d
 
 type MarkdownGeneratorArgs = z.infer<typeof CreatePageToolArgsSchema> | z.infer<typeof UpdatePageToolArgsSchema>;
 
-export function generateStyledMarkdown(args: MarkdownGeneratorArgs, config: StyleGuideConfig): string {
-    let markdown = "";
+export function generateStyledMarkdown(
+    args: MarkdownGeneratorArgs,
+    config: StyleGuideConfig,
+    baseMarkdown?: string
+): string {
+    // Start with base markdown if provided
+    let markdown = baseMarkdown ? baseMarkdown.trim() + "\n\n" : "";
     const title = 'page_title' in args ? args.page_title : undefined;
 
-    // --- Logo & Haupttitel --- (wie vorher)
-    if (args.include_logo && config.logoMarkdown) { markdown += config.logoMarkdown + "\n\n"; }
-    if (title) { markdown += `${config.headingLevel1} ${title}\n\n`; }
+    // --- Logo & Haupttitel --- (nur hinzufügen wenn keine Vorlage oder explizit angefordert)
+    if (!baseMarkdown) {
+        if (args.include_logo && config.logoMarkdown) {
+            markdown += config.logoMarkdown + "\n\n";
+        }
+        if (title) {
+            markdown += `${config.headingLevel1} ${title}\n\n`;
+        }
+    }
 
     // --- Abschnitte ---
     args.sections.forEach((section: Section) => { // 'section' sollte jetzt den Typ mit allen enum-Werten haben
