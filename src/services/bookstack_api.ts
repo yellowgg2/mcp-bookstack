@@ -5,7 +5,9 @@ import {
     BookstackSearchResponse, bookstackSearchResponseSchema,
     BookstackPageData, bookstackPageDataSchema,
     BookDetails, bookDetailsSchema,
-    CreateBookApiPayload, CreatePageApiPayload, UpdatePageApiPayload, PageDetails
+    CreateBookApiPayload, CreatePageApiPayload, UpdatePageApiPayload, PageDetails,
+    BookstackShelvesResponse, bookstackShelvesResponseSchema,
+    BookstackBooksResponse, bookstackBooksResponseSchema
 } from "../common/schemas_api.js";
 
 export class BookStackAPI {
@@ -58,6 +60,19 @@ export class BookStackAPI {
            const message = `An unexpected error occurred during ${action}: ${error}`;
            console.error(`[BookStackAPI Error] ${message}`);
            return new McpError(ErrorCode.InternalError, message);
+        }
+    }
+
+    async searchAll(query: string, page: number, count: number): Promise<BookstackSearchResponse> {
+        const action = `search all content with query "${query}"`;
+        try {
+            // Keine Typ-Einschränkung für die allgemeine Suche
+            const url = `${this.baseUrl}/api/search?query=${encodeURIComponent(query)}&page=${page}&count=${count}`;
+            console.error(`[BookStackAPI] GET ${url}`);
+            const response = await axios.get(url, { headers: this.getHeaders() });
+            return bookstackSearchResponseSchema.parse(response.data);
+        } catch (error) {
+            throw this.handleError(error, action);
         }
     }
 
@@ -117,6 +132,56 @@ export class BookStackAPI {
             console.error(`[BookStackAPI] PUT ${url}`, payload);
             const response = await axios.put(url, payload, { headers: this.getHeaders(true) });
             return bookstackPageDataSchema.parse(response.data);
+        } catch (error) {
+            throw this.handleError(error, action);
+        }
+    }
+
+    async searchShelves(query: string, page: number, count: number): Promise<BookstackShelvesResponse> {
+        const action = `search shelves with query "${query}"`;
+        try {
+            const searchQuery = query ? `${query}{type:bookshelf}` : '{type:bookshelf}';
+            const url = `${this.baseUrl}/api/search?query=${encodeURIComponent(searchQuery)}&page=${page}&count=${count}`;
+            console.error(`[BookStackAPI] GET ${url}`);
+            const response = await axios.get(url, { headers: this.getHeaders() });
+            return bookstackShelvesResponseSchema.parse(response.data);
+        } catch (error) {
+            throw this.handleError(error, action);
+        }
+    }
+
+    async getShelves(): Promise<BookstackShelvesResponse> {
+        const action = `get all shelves`;
+        try {
+            const url = `${this.baseUrl}/api/shelves`;
+            console.error(`[BookStackAPI] GET ${url}`);
+            const response = await axios.get(url, { headers: this.getHeaders() });
+            return bookstackShelvesResponseSchema.parse(response.data);
+        } catch (error) {
+            throw this.handleError(error, action);
+        }
+    }
+
+    async searchBooks(query: string, page: number, count: number): Promise<BookstackBooksResponse> {
+        const action = `search books with query "${query}"`;
+        try {
+            const searchQuery = query ? `${query}{type:book}` : '{type:book}';
+            const url = `${this.baseUrl}/api/search?query=${encodeURIComponent(searchQuery)}&page=${page}&count=${count}`;
+            console.error(`[BookStackAPI] GET ${url}`);
+            const response = await axios.get(url, { headers: this.getHeaders() });
+            return bookstackBooksResponseSchema.parse(response.data);
+        } catch (error) {
+            throw this.handleError(error, action);
+        }
+    }
+
+    async getBooks(): Promise<BookstackBooksResponse> {
+        const action = `get all books`;
+        try {
+            const url = `${this.baseUrl}/api/books`;
+            console.error(`[BookStackAPI] GET ${url}`);
+            const response = await axios.get(url, { headers: this.getHeaders() });
+            return bookstackBooksResponseSchema.parse(response.data);
         } catch (error) {
             throw this.handleError(error, action);
         }

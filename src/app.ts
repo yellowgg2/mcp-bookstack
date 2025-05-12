@@ -43,6 +43,11 @@ type CreatePageApiPayload = z.infer<typeof createPageApiPayloadSchema>;
 type UpdatePageApiPayload = z.infer<typeof updatePageApiPayloadSchema>;
 
 // -- Tool Input Argument Schemas (Extern) --
+const SearchAllArgsSchema = z.object({
+    query: z.string().default("").describe("Query string to search for all content types (shelves, books, chapters & pages). Can include Bookstack search terms like specific tags `[tag_name=tag_value]` or `{created_by:me}`."),
+    page: z.number().min(1).optional().default(1).describe("Page number of results to return."),
+    count: z.number().min(1).max(100).optional().default(10).describe("Number of results to return per page (max typically 100, check Bookstack instance config)."),
+});
 const SearchPagesArgsSchema = z.object({
     query: z.string().default("").describe("Query string to search for pages. Can include Bookstack search terms like specific tags `[tag_name=tag_value]` or searching within a book `[book=book_slug]`."),
     page: z.number().min(1).optional().default(1).describe("Page number of results to return."),
@@ -91,6 +96,7 @@ class BookstackServer {
   // --- API Helper Functions ---
   private getApiHeaders(isJsonPayload: boolean = false) { const headers: Record<string, string> = { "Cache-Control": "no-cache", Accept: "application/json", "User-Agent": "Bookstack MCP Server v1.1.4", Connection: "keep-alive", Authorization: `Token ${this.token}:${this.secret}` }; if (isJsonPayload) { headers["Content-Type"] = "application/json"; } return headers; }
   private handleApiError(error: unknown, action: string): McpError { if (axios.isAxiosError(error)) { const status = error.response?.status; const responseData = error.response?.data; let message = `Failed to ${action}: ${error.message}`; if (status) { message += ` (Status: ${status})`; } if (responseData && typeof responseData === 'object') { const apiError = (responseData as any)?.error?.message || JSON.stringify(responseData); message += ` - API Error: ${apiError}`; } console.error(message, 'Request URL:', error.config?.url); if (status === 401 || status === 403) return new McpError(ErrorCode.InternalError, message); if (status === 404) return new McpError(ErrorCode.MethodNotFound, message); return new McpError(ErrorCode.InternalError, message); } else if (error instanceof z.ZodError) { const message = `Failed to parse API response for ${action}. Details: ${JSON.stringify(error.errors)}`; console.error(message); return new McpError(ErrorCode.InternalError, message); } else { const message = `An unexpected error occurred during ${action}: ${error}`; console.error(message); return new McpError(ErrorCode.InternalError, message); } }
+  private async fetchBookstackAll(query: string, page: number, count: number): Promise<BookstackSearchResponse> { try { const url = `${this.baseUrl}/api/search?query=${encodeURIComponent(query)}&page=${page}&count=${count}`; console.error(`GET ${url}`); const response = await axios.get(url, { headers: this.getApiHeaders() }); return bookstackSearchResponseSchema.parse(response.data); } catch (error) { throw this.handleApiError(error, `search all content with query "${query}"`); } }
   private async fetchBookstackPages(query: string, page: number, count: number): Promise<BookstackSearchResponse> { try { const searchQuery = query ? `${query}{type:page}` : '{type:page}'; const url = `${this.baseUrl}/api/search?query=${encodeURIComponent(searchQuery)}&page=${page}&count=${count}`; console.error(`GET ${url}`); const response = await axios.get(url, { headers: this.getApiHeaders() }); return bookstackSearchResponseSchema.parse(response.data); } catch (error) { throw this.handleApiError(error, `search pages with query "${query}"`); } }
   private async readBookstackPage(pageId: number): Promise<BookstackPageData> { try { const url = `${this.baseUrl}/api/pages/${pageId}`; console.error(`GET ${url}`); const response = await axios.get(url, { headers: this.getApiHeaders() }); return bookstackPageDataSchema.parse(response.data); } catch (error) { throw this.handleApiError(error, `read page ${pageId}`); } }
   private async createBookstackBook(payload: CreateBookApiPayload): Promise<BookDetails> { try { const url = `${this.baseUrl}/api/books`; console.error(`POST ${url}`, payload); const response = await axios.post(url, payload, { headers: this.getApiHeaders(true) }); return bookDetailsSchema.parse(response.data); } catch (error) { throw this.handleApiError(error, "create book"); } }
@@ -102,6 +108,11 @@ class BookstackServer {
     // Handler for listing available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
         // Definiere die Struktur jedes Tools
+        const searchAllTool = {
+          name: "search_all",
+          description: "Search all content types (shelves, books, chapters & pages) within Bookstack based on a query string. Returns a list of matching items with titles, types, URLs, and preview content.",
+          inputSchema: zodToJsonSchema(SearchAllArgsSchema)
+        };
         const searchPagesTool = {
           name: "search_pages",
           description: "Search pages within Bookstack based on a query string. Returns a list of matching pages with titles, URLs, and preview content.",
@@ -130,6 +141,7 @@ class BookstackServer {
 
         // Lasse TypeScript den Typ des Arrays aus den Elementen ableiten.
         const tools = [ // <-- KEINE explizite Typ-Annotation ': ToolSchema[]' mehr
+            searchAllTool,
             searchPagesTool,
             getPageContentTool,
             createBookTool,
@@ -146,6 +158,37 @@ class BookstackServer {
 
       try {
           switch (request.params.name) {
+              case "search_all": {
+                  const args = SearchAllArgsSchema.parse(request.params.arguments);
+                  const searchResult = await this.fetchBookstackAll(args.query, args.page, args.count);
+                  if (!searchResult.data || searchResult.data.length === 0) {
+                      return { content: [{ type: "text", text: "No content found matching the query." }] };
+                  }
+                  
+                  // Formatiere die Ergebnisse basierend auf dem Inhaltstyp
+                  const responseText = searchResult.data.map(item => {
+                      // Gemeinsame Informationen für alle Typen
+                      let result = `### ${item.name} (ID: ${item.id})\n` +
+                                   `**Type:** ${this.getContentTypeName(item.type)}\n` +
+                                   `**URL:** ${item.url}\n`;
+                      
+                      // Spezifische Informationen je nach Typ
+                      if (item.type === 'page' && item.book) {
+                          result += `**Book:** ${item.book.name}\n`;
+                      }
+                      
+                      // Vorschau hinzufügen, falls vorhanden
+                      if (item.preview_html?.content) {
+                          result += `\n${item.preview_html.content.substring(0, 300)}...\n`;
+                      }
+                      
+                      result += '---';
+                      return result;
+                  }).join("\n\n");
+                  
+                  return { content: [{ type: "text", text: responseText }] };
+              }
+              
               case "search_pages": {
                   const args = SearchPagesArgsSchema.parse(request.params.arguments);
                   const searchResult = await this.fetchBookstackPages(args.query, args.page, args.count);
@@ -202,6 +245,17 @@ class BookstackServer {
       }
     }); // Ende CallToolRequestSchema Handler
   } // Ende setupToolHandlers
+
+  // Hilfsfunktion zur Übersetzung der Inhaltstypen
+  private getContentTypeName(type: string): string {
+      switch (type) {
+          case 'bookshelf': return 'Shelf';
+          case 'book': return 'Book';
+          case 'chapter': return 'Chapter';
+          case 'page': return 'Page';
+          default: return type;
+      }
+  }
 
   private htmlToPlainText(html: string): string { if (!html) return ''; let text = html .replace(/<style([\s\S]*?)<\/style>/gi, '') .replace(/<script([\s\S]*?)<\/script>/gi, '') .replace(/\s/gi, '') .replace(/<br\s*\/?>/gi, "\n") .replace(/<\/p>/gi, "\n\n") .replace(/<\/div>/gi, "\n") .replace(/<\/h[1-6]>/gi, "\n\n") .replace(/<\/li>/gi, "\n") .replace(/<li[^>]*>/gi, "• ") .replace(/<[^>]+>/g, '') .replace(/&nbsp;/g, " ") .replace(/&amp;/g, "&") .replace(/&lt;/g, "<") .replace(/&gt;/g, ">") .replace(/&quot;/g, '"') .replace(/&#39;/g, "'"); text = text.replace(/[ \t]+/g, ' '); text = text.replace(/\n{3,}/g, '\n\n'); text = text.replace(/^\s+|\s+$/g, ''); return text.trim(); }
 

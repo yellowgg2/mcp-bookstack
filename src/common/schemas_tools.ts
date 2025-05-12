@@ -7,8 +7,26 @@ export const tagSchema = z.object({
     value: z.string().optional().describe("Optionaler Wert des Tags")
 });
 
+export const SearchAllArgsSchema = z.object({
+    query: z.string().default("").describe("Suchanfrage für alle Inhaltstypen (Regale, Bücher, Kapitel & Seiten). Unterstützt Bookstack-Syntax wie [tag=wert] oder {created_by:me}."),
+    page: z.number().min(1).optional().default(1).describe("Seitennummer der Ergebnisse."),
+    count: z.number().min(1).max(100).optional().default(10).describe("Anzahl Ergebnisse pro Seite (max. 100)."),
+});
+
 export const SearchPagesArgsSchema = z.object({
     query: z.string().default("").describe("Suchanfrage für Seiten. Unterstützt Bookstack-Syntax wie [tag=wert] oder {type:page}."),
+    page: z.number().min(1).optional().default(1).describe("Seitennummer der Ergebnisse."),
+    count: z.number().min(1).max(100).optional().default(10).describe("Anzahl Ergebnisse pro Seite (max. 100)."),
+});
+
+export const SearchShelvesArgsSchema = z.object({
+    query: z.string().default("").describe("Suchanfrage für Regale. Unterstützt Bookstack-Syntax wie [tag=wert]."),
+    page: z.number().min(1).optional().default(1).describe("Seitennummer der Ergebnisse."),
+    count: z.number().min(1).max(100).optional().default(10).describe("Anzahl Ergebnisse pro Seite (max. 100)."),
+});
+
+export const SearchBooksArgsSchema = z.object({
+    query: z.string().default("").describe("Suchanfrage für Bücher. Unterstützt Bookstack-Syntax wie [tag=wert]."),
     page: z.number().min(1).optional().default(1).describe("Seitennummer der Ergebnisse."),
     count: z.number().min(1).max(100).optional().default(10).describe("Anzahl Ergebnisse pro Seite (max. 100)."),
 });

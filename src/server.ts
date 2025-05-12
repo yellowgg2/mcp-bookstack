@@ -13,7 +13,10 @@ import { z } from 'zod';
 import { BookStackAPI } from './services/bookstack_api.js';
 
 // Tool Schemas und Handler importieren (diese sind jetzt Objekte mit abgeleitetem Typ)
+import { searchAllToolSchema, handleSearchAll } from './tools/search_all.js';
 import { searchPagesToolSchema, handleSearchPages } from './tools/search_pages.js';
+import { searchShelvesToolSchema, handleSearchShelves } from './tools/search_shelves.js';
+import { searchBooksToolSchema, handleSearchBooks } from './tools/search_books.js';
 import { getPageContentToolSchema, handleGetPageContent } from './tools/get_page_content.js';
 import { createBookToolSchema, handleCreateBook } from './tools/create_book.js';
 import { createPageToolSchema, handleCreatePage } from './tools/create_page.js';
@@ -21,7 +24,10 @@ import { updatePageToolSchema, handleUpdatePage } from './tools/update_page.js';
 
 // Tool Argument Schemas (nur zum Parsen benötigt)
 import {
+    SearchAllArgsSchema,
     SearchPagesArgsSchema,
+    SearchShelvesArgsSchema,
+    SearchBooksArgsSchema,
     GetPageContentArgsSchema,
     CreateBookArgsSchema,
     CreatePageToolArgsSchema,
@@ -60,7 +66,10 @@ export class BookStackMcpServer {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => {
              // Array ohne explizite Typ-Annotation erstellen
             const tools = [
+                searchAllToolSchema,
                 searchPagesToolSchema,
+                searchShelvesToolSchema,
+                searchBooksToolSchema,
                 getPageContentToolSchema,
                 createBookToolSchema,
                 createPageToolSchema,
@@ -79,7 +88,10 @@ export class BookStackMcpServer {
              try {
                 let resultText: string;
                 switch (name) {
+                    case searchAllToolSchema.name: { const parsedArgs = SearchAllArgsSchema.parse(args); resultText = await handleSearchAll(parsedArgs, this.bookstackApi); break; }
                     case searchPagesToolSchema.name: { const parsedArgs = SearchPagesArgsSchema.parse(args); resultText = await handleSearchPages(parsedArgs, this.bookstackApi); break; }
+                    case searchShelvesToolSchema.name: { const parsedArgs = SearchShelvesArgsSchema.parse(args); resultText = await handleSearchShelves(parsedArgs, this.bookstackApi); break; }
+                    case searchBooksToolSchema.name: { const parsedArgs = SearchBooksArgsSchema.parse(args); resultText = await handleSearchBooks(parsedArgs, this.bookstackApi); break; }
                     case getPageContentToolSchema.name: { const parsedArgs = GetPageContentArgsSchema.parse(args); resultText = await handleGetPageContent(parsedArgs, this.bookstackApi); break; }
                     case createBookToolSchema.name: { const parsedArgs = CreateBookArgsSchema.parse(args); resultText = await handleCreateBook(parsedArgs, this.bookstackApi); break; }
                     case createPageToolSchema.name: { const parsedArgs = CreatePageToolArgsSchema.parse(args); resultText = await handleCreatePage(parsedArgs, this.bookstackApi); break; }
