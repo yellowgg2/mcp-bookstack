@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/yellowgg2-mcp-bookstack-badge.png)](https://mseep.ai/app/yellowgg2-mcp-bookstack)
+
 # BookStack MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@yellowgg2/mcp-bookstack)](https://smithery.ai/server/@yellowgg2/mcp-bookstack)
